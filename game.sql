@@ -14,61 +14,66 @@ with recursive
     from deck_cards_with_player_indices
     group by player_index
   ),
-  simulation_hands as (
-    select 1 as hand, player_index, packet
-    from player_packets
+  simulation_hands (hand, packets) as (
+    select
+      1 as hand,
+      -- Unfortunately array_agg doesn't yet handle aggregating arrays :(
+      -- but support for this will be added in 9.5 :)
+      array[
+        (select packet from player_packets where player_index = 1),
+        (select packet from player_packets where player_index = 2)
+      ] as packets
 
     union all
 
     (
-      with last_simulation_hand_packets as (
+      select
+        hand + 1 as hand,
+        array[
+          (case when winner = 1 then pending_cards || retained_packets[1] else retained_packets[1] end),
+          (case when winner = 2 then pending_cards || retained_packets[1] else retained_packets[2] end)
+        ] as packets
+      from (
         select *
         from simulation_hands
-        where simulation_hands.hand = (select max(h2.hand) from simulation_hands h2)
-      ),
-      simulation_hand_precalculations as (
+        order by hand desc
+        limit 1
+      ) last_simulation_hand_packets
+      inner join lateral (
         select
-          player_index,
-          packet[1:(array_length(packet) - 1)] as retained_cards,
-          coalesce(packet[array_length(packet)], -1) as last_card,
+          array[
+            packets[1][1:array_length(packets[1], 1)],
+            packets[2][1:array_length(packets[2], 1)]
+          ] as retained_packets,
+          --array[
+          --  packets[0][array_length(packets[0])],
+          --  packets[1][array_length(packets[1])]
+          --] as pending_cards,
+          array[
+            coalesce(packets[0][array_length(packets[1], 1)], -1),
+            coalesce(packets[1][array_length(packets[2], 1)], -1)
+          ] as last_cards
+      ) simulation_hand_precalculations on true
+      inner join lateral (
+        select
           (
-            select array_agg(p2.packet[array_length(p2.packet)])
-            from last_simulation_hand_packets p2
+            select array_agg(card)
+            from unnest(last_cards) as cards(card)
+            where card > -1
+            order by random()
           ) as pending_cards,
-          coalesce((
-            select max(p3.packet[array_length(p3.packet)])
-            from last_simulation_hand_packets p3
-            where p3.player_index != last_simulation_hand_packets.player_index
-          ), -1) as max_opposing_card
-        from last_simulation_hand_packets
-      ),
-      simulation_hand_calculations as (
-        select
-          player_index,
-          retained_cards,
-          (select * from unnest(pending_cards) order by random()) as pending_cards,
           (
             case
-            when last_card = max_opposing_card then null
-            when last_card > max_opposing_card then true
-            else false
+            when last_cards[1] = last_cards[2] then null
+            when last_cards[1] > last_cards[2] then 1
+            else 2
             end
-          ) as winner
-        from simulation_hand_precalculations
-      )
-      select
-        (select max(simulation_hands.hand) + 1 from simulation_hands) as hand,
-        player_index,
-        (case when winner then pending_cards || packet else packet end) as packet
-      from simulation_hand_calculations
+          ) as winning_index
+      ) simulation_hand_calculations on true
       where
-        1 > (
-          -- Either one player has all of the cards (that is, there's only one player_index)
-          -- or there are multiple player indices but the packets are all equal (stalemate).
-          select count(distinct(player_index, player_packet))
-          from last_simulation_hand_packets
-          where array_length(player_packet) > 0
-        )
+        packets[1] = packets[2] -- stalemate
+        or array_length(packets[1], 1) = 0
+        or array_length(packets[2], 1) = 0
     )
   )
 
