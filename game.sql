@@ -14,12 +14,13 @@ with recursive
     from deck_cards_with_player_indices
     group by player_index
   ),
-  simulation_hands (hand, packet_1, packet_2, pending_cards, winner) as (
+  simulation_hands (hand, packet_1, packet_2, pending_cards, war_count, winner) as (
     select
       1 as hand,
       (select packet from player_packets where player_index = 0) as packet_1,
       (select packet from player_packets where player_index = 1) as packet_2,
       array[]::integer[],
+      0,
       null::integer
 
     union all
@@ -27,9 +28,16 @@ with recursive
     (
       select
         hand + 1 as hand,
-        (case simulation_hand_calculations.winner when 1 then simulation_hand_calculations.pending_cards || retained_packet_1 else retained_packet_1 end) as packet_1,
-        (case simulation_hand_calculations.winner when 2 then simulation_hand_calculations.pending_cards || retained_packet_2 else retained_packet_2 end) as packet_2,
-        (case when simulation_hand_calculations.winner is null then simulation_hand_calculations.pending_cards else array[]::integer[] end) as pending_cards,
+        (case simulation_hand_calculations.winner when 1 then simulation_hand_calculations.pending_cards || retained_packet_1 else retained_packet_1 end),
+        (case simulation_hand_calculations.winner when 2 then simulation_hand_calculations.pending_cards || retained_packet_2 else retained_packet_2 end),
+        (case when simulation_hand_calculations.winner is null then simulation_hand_calculations.pending_cards else array[]::integer[] end),
+        (
+          case
+          when last_simulation_results.winner is not null and simulation_hand_calculations.winner is null
+          then last_simulation_results.war_count + 1
+          else last_simulation_results.war_count
+          end
+        ),
         simulation_hand_calculations.winner
       from (
         select *
