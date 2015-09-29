@@ -47,10 +47,9 @@ with recursive
       inner join lateral (
         select
           (
-            select array_agg(card)
-            from unnest(last_cards) as cards(card)
-            where card > -1
-            order by random()
+            select array_agg(c.n order by random())
+            from unnest(last_cards) c(n)
+            where c.n > -1
           ) as pending_cards,
           (
             case
