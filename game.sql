@@ -74,7 +74,6 @@ with recursive
           packet_1 = packet_2 -- stalemate
           or array_length(packet_1, 1) = 0
           or array_length(packet_2, 1) = 0
-          or hand > 10000 -- safety kill switch for development; remove in final version
         )
     )
   )
