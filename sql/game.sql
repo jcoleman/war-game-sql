@@ -6,7 +6,7 @@ with recursive
     order by random()
   ),
   deck_cards_with_player_indices as (
-    select (row_number() over ()) % 2 as player_index, deck_cards,card
+    select (row_number() over ()) % 2 as player_index, card
     from deck_cards
   ),
   player_packets as (

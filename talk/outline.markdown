@@ -1,4 +1,4 @@
-Let's Play a Game (with CTEs)
+Shall We Play a Game? (with CTEs)
 _____
 
 Introduction (3-5 minutes)
@@ -11,7 +11,6 @@ Introduction (3-5 minutes)
 2. Talk Background
   - Inspiration: interview question (in another language)
   - What if...I could do this in SQL? 
-  - Explain War card game.
 3. Roadmap
   - Why should you attend this talk?
     - CTEs are incredibly powerful.
@@ -23,12 +22,20 @@ Introduction (3-5 minutes)
     - Work through the final working solution.
     - ...And we'll leave some time at the end for Q/A.
 
-Problem Space (5 minutes
+
+Review (3 minutes)
 ----
 
-1. Step back: How would we do this procedurally?
+1. Common table expressions
+2. Recursive common table expressions
+
+
+Problem Space (5 minutes
+----
+1. Explain War card game.
+2. Step back: How would we do this procedurally?
   - Pseudocode an example?
-2. But how do we express this in a set language?
+3. But how do we express this in a set language?
   - Conceptually, I think it's easier (though the details might plague us).
   - My attempt:
     The ordered set of tuples containing the winner of that play and each player's hand of cards where each subsequent tuple is the result of `f(n-1)`.
@@ -40,13 +47,6 @@ Problem Space (5 minutes
     _until one of the player's hands is empty._
   - So we have something really interesting here: we've basically written the definition of a recursive function: we have a 1.) base case and 2.) a recursive form (+ an initial value).
   - ...And that sounds like a candiate for recursive CTEs.
-
-
-Review (3 minutes)
-----
-
-1. Common table expressions
-2. Recursive common table expressions
 
 
 Failed Attempt One
@@ -62,7 +62,7 @@ Lessons:
 Failed Attempt Two
 ----
 
-Descriptiopn: tuple (hand, array of card arrays)
+Description: tuple (hand, array of card arrays)
 
 Lessons:
 1. PG multi-dimensional arrays are actually matrices.
@@ -81,5 +81,5 @@ Lessons:
 Other Notes
 ----
 
-1. You cannot have nested recursive CTEs
+1. FALSE: You cannot have nested recursive CTEs
 
