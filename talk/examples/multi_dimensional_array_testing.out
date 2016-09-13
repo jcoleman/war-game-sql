@@ -1,0 +1,38 @@
+postgres=# select array_length('{{1,2},{3,4}
+postgres'# 
+postgres=# 
+postgres=# select array_length('{{1,2},{3,4}}'::integer[][], 2);
+ array_length 
+--------------
+            2
+(1 row)
+
+postgres=# select array_length(('{{1,2},{3,4}}'::integer[][])[1], 1);
+ERROR:  function array_length(integer, integer) does not exist
+LINE 1: select array_length(('{{1,2},{3,4}}'::integer[][])[1], 1);
+               ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+postgres=# select array_length(('{{1,2},{3,4}}'::integer[][])[1]::integer[], 1);
+ERROR:  cannot cast type integer to integer[]
+LINE 1: ...ect array_length(('{{1,2},{3,4}}'::integer[][])[1]::integer[...
+                                                             ^
+postgres=# select ('{{1,2},{3,4}}'::integer[][])[1]
+postgres-# );
+ERROR:  syntax error at or near ")"
+LINE 2: );
+        ^
+postgres=# select ('{{1,2},{3,4}}'::integer[][])[1];                                                                                                                                                       int4 
+------
+     
+(1 row)
+
+postgres=# select ('{{1,2},{3,4}}'::integer[][])[1][1];
+ int4 
+------
+    1
+(1 row)
+
+postgres=# select ((('{{1,2},{3,4}}'::integer[][])[1])::integer[])[1];
+ERROR:  cannot cast type integer to integer[]
+LINE 1: select ((('{{1,2},{3,4}}'::integer[][])[1])::integer[])[1];
+

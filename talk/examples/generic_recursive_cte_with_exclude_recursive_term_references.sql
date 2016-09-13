@@ -8,9 +8,9 @@ WITH RECURSIVE cte(n) AS (
     FROM cte
     WHERE n < 10
     
-    UNION
+    EXCEPT
 
-    SELECT n * 2
+    SELECT n
     FROM cte
     WHERE n < 2
   )
